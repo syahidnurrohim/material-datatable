@@ -1,0 +1,22 @@
+{
+  "name": "@syahidnurrohim/material-datatable",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/builder.js",
+  "publishConfig": {
+    "registry":"https://npm.pkg.github.com/"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/syahidnurrohim/material-datatable.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/syahidnurrohim/material-datatable/issues"
+  },
+  "homepage": "https://github.com/syahidnurrohim/material-datatable#readme"
+}
