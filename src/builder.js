@@ -37,13 +37,14 @@ var MaterialTable = (function () {
     this.end = this.rowBound
     this.totalData = 0
     this.search = ''
+    this.header = null
     this.filter = {}
 
     this.rowsDropdown = this.rowsDropdown.bind(this)
     this.changeRowPerPage = this.changeRowPerPage.bind(this)
     this.searchData = this.searchData.bind(this)
     this.extend(this.options, options)
-    
+
   }
 
   MTB.prototype.init = function () {
@@ -68,7 +69,7 @@ var MaterialTable = (function () {
   }
 
   MTB.prototype.sendBuildingMessage = function () {
-    const tbody = this.targetElement.querySelector('tbody') 
+    const tbody = this.targetElement.querySelector('tbody')
     tbody.innerHTML = ''
     tbody.append(this.buildNode({
       el: 'tr',
@@ -76,13 +77,13 @@ var MaterialTable = (function () {
       child: [{
         el: 'td',
         class: cn.MDCCell,
-        style: {textAlign: 'center'},
+        style: { textAlign: 'center' },
         colspan: this.options.columns.length,
         child: 'Wait for loading data...'
       }]
     }))
   }
-  
+
   MTB.prototype.isFunc = function (object) {
     return object && typeof object === 'function';
   }
@@ -116,7 +117,7 @@ var MaterialTable = (function () {
     this.end = end > this.totalData ? this.totalData : end
     this.start = this.pageIndex * this.rowBound
   }
-  
+
   MTB.prototype.setData = function (data) {
     this.data = data
   }
@@ -139,7 +140,7 @@ var MaterialTable = (function () {
       return 0
     })
     this.setData(ordered)
-    this._callFn('buildWithData', function() {
+    this._callFn('buildWithData', function () {
       this.buildRow()
     })
   }
@@ -169,13 +170,13 @@ var MaterialTable = (function () {
     const _this = this
     let timeout;
     function searchData(e) {
-      if ((((e.which < 65 && !(e.which >= 48 || e.which <= 57)) && e.which != 32 && e.which != 8) || e.which > 90 ) || e.ctrlKey) {
+      if ((((e.which < 65 && !(e.which >= 48 || e.which <= 57)) && e.which != 32 && e.which != 8) || e.which > 90) || e.ctrlKey) {
         return false;
       }
       _this.search = e.target.value
-      _this._callFn('buildWithData', function() {
+      _this._callFn('buildWithData', function () {
         this.buildRow()
-        this.buildFooter({replace: true})
+        this.buildFooter({ replace: true })
       })
     }
     return function (e) {
@@ -192,17 +193,17 @@ var MaterialTable = (function () {
       el: 'div',
       class: cn.MDCWrapper,
       style: this.options.style,
-      child: [{el: 'div', class: cn.MDCTableContainer, child: this.targetElement}]
+      child: [{ el: 'div', class: cn.MDCTableContainer, child: this.targetElement }]
     })
     const search = this.buildNode({
       el: 'div',
       style: style.searchWrapper,
       child: [{
-        el: 'input', 
-        type: 'text', 
-        style: style.searchInput, 
-        placeholder: 'Search here...', 
-        events: {keydown: this.searchData()}, 
+        el: 'input',
+        type: 'text',
+        style: style.searchInput,
+        placeholder: 'Search here...',
+        events: { keydown: this.searchData() },
         withoutChild: true
       }]
     })
@@ -229,19 +230,38 @@ var MaterialTable = (function () {
 
     const headerCellsLoop = function (cell, iCell) {
       var column = _this.options.columns[iCell]
-      _this.extend(cell.style, {fontWeight: '600', opacity: '0.9'})
+      var callArrow = function (dir) {
+        var icon = cell.querySelector('i')
+        var arrow = dir === 'asc' ? 'arrow_downward' : 'arrow_upward'
+        if (icon) {
+          icon.innerHTML = arrow
+        } else {
+          cell.append(_this.buildNode({ el: 'i', class: [cn.MDCIcon, cn.MaterialIcons, 'i-dir'], style: style.arrowHeader, child: arrow }))
+        }
+      }
+      _this.extend(cell.style, { fontWeight: '600', opacity: '0.9' })
       cell.classList.add(cn.MDCHeaderCell)
       if (column.numeric) {
         cell.classList.add(cn.MDCHeaderCellNumeric)
       }
       cell.addEventListener('click', function (e) {
         var dir = e.target.getAttribute('data-dir')
+        var removeIcon = function () {
+          var icon = header.querySelector('.i-dir')
+          if (icon) {
+            icon.remove()
+            removeIcon()
+          }
+        }
+        removeIcon()
         if (dir) {
           dir = dir === 'asc' ? 'desc' : 'asc'
           e.target.setAttribute('data-dir', dir)
         } else {
           e.target.setAttribute('data-dir', 'asc')
         }
+        dir = e.target.getAttribute('data-dir')
+        callArrow(dir)
         if (column.orderable !== false) {
           _this.order(column, dir)
         }
@@ -268,12 +288,22 @@ var MaterialTable = (function () {
       if (options.numeric) {
         classes.push(cn.MDCCellNumeric)
       }
-      return _this.buildNode({el: 'td', class: classes, child: data})
+      return _this.buildNode({ el: 'td', class: classes, child: data })
+    }
+
+    if (!this.data.length) {
+      var row = this.buildNode({ el: 'tr', class: cn.MDCRow, withoutChild: true })
+      var thead = Array.from(this.targetElement
+        .querySelector('thead')
+        .querySelectorAll('tr'))
+        .reverse()[0]
+        .querySelectorAll('th')
+      row.append(this.buildNode({ el: 'td', colspan: thead.length, class: cn.MDCCell, style: { textAlign: 'center' }, child: 'Tidak ada data tersedia' }))
+      body.append(row)
     }
 
     this.data.forEach(function (data, index) {
-      const row = _this.buildNode({el: 'tr', class: cn.MDCRow, withoutChild: true})
-      row.classList.add(cn.MDCRow)
+      const row = _this.buildNode({ el: 'tr', class: cn.MDCRow, withoutChild: true })
 
       _this.options.columns.forEach((col, iCell) => {
         const options = {
@@ -307,7 +337,7 @@ var MaterialTable = (function () {
     const dw = this.tableWrapper.querySelector('.' + cn.MDCSelectMenu)
     dw.style.display = e === 'show' ? 'block' : 'none'
     dw.style.opacity = e === 'show' ? 1 : 0
-  } 
+  }
 
   MTB.prototype.changeRowPerPage = function (e) {
     this.rowsDropdownTrigger('hide')
@@ -315,61 +345,87 @@ var MaterialTable = (function () {
     this.pageIndex = 0
     this._callFn('buildWithData', function () {
       this.buildRow()
-      this.buildFooter({replace: true})
+      this.buildFooter({ replace: true })
     })
   }
-  
+
   MTB.prototype.buildFooter = function (options = {}) {
     const _this = this
     const rowsPerPageList = this.options.rowsPerPage.map(rows => ({
       el: 'li',
       class: [cn.MDCLi].concat(rows == _this.rowBound ? cn.MDCLiSelected : ''),
-      data: {row: rows},
+      data: { row: rows },
       events: { click: this.changeRowPerPage },
       child: [{
         el: 'span',
-        data: {row: rows},
+        data: { row: rows },
         class: cn.MDCLiText,
         child: rows
       }]
     }))
-    const s = {el: 'div', class: cn.MDCPagination, style: style.paginationWrapper, child: [
-      {el: 'div', class: cn.MDCPaginationTrailing, child: [
-        {el: 'div', class: cn.MDCPaginationRPP, child: [
-          {el: 'div', class: cn.MDCPaginationRPPLabel, child: 'Rows per page'},
-          {el: 'div', class: cng.selectRPPGroup, child: [
-            {el: 'div', class: cn.MDCSelectAnchor, style: style.selectAnchor, events: { click: this.rowsDropdown }, child: [
-              {el: 'span', class: cn.MDCSelectedTextContainer, child: [
-                {el: 'span', class: cn.MDCSelectedText, child: this.rowBound}
-              ]},
-              {el: 'span', class: cn.MDCSelectDropdownIcon, child: []},
-              {el: 'span', class: cng.spanNotchedGroup, child: [
-                {el: 'span', class: cn.MDCNotchedOutlineLeading, child: []},
-                {el: 'span', class: cn.MDCNotchedOutlineTrailing, child: []},
-              ]},
-            ]},
-            {el: 'div', class: cng.selectRPPMenuGroup, child: [
-              {el: 'ul', class: cng.listRPPGroup, child: rowsPerPageList}
-            ]}
-          ]}
-        ]},
-        {el: 'div', class: cn.MDCPaginationNavigation, child: [
-          {el: 'div', class: cn.MDCPaginationNavigationTotal, child: _this.start + '-' + _this.end + ' of ' + _this.totalData},
-          {el: 'button', disabled: this.pageIndex === 0, class: cng.footNavigationGroup, child: [
-            {el: 'div', class: cn.MDCButtonIcon, child: 'first_page'}
-          ], events: {click: e => this.navigation('firstPage', e)}},
-          {el: 'button', disabled: this.pageIndex === 0, class: cng.footNavigationGroup, child: [
-            {el: 'div', class: cn.MDCButtonIcon, child: 'chevron_left'}
-          ], events: {click: e => this.navigation('prevPage', e)}},
-          {el: 'button', disabled: (this.pageIndex + 1) === Math.ceil(this.totalData / this.rowBound), class: cng.footNavigationGroup, child: [
-            {el: 'div', class: cn.MDCButtonIcon, child: 'chevron_right'}
-          ], events: {click: e => this.navigation('nextPage', e)}},
-          {el: 'button', disabled: (this.pageIndex + 1) === Math.ceil(this.totalData / this.rowBound), class: cng.footNavigationGroup, child: [
-            {el: 'div', class: cn.MDCButtonIcon, child: 'last_page'}
-          ], events: {click: e => this.navigation('lastPage', e)}},
-        ]}
-      ]}
-    ]}
+    const s = {
+      el: 'div', class: cn.MDCPagination, style: style.paginationWrapper, child: [
+        {
+          el: 'div', class: cn.MDCPaginationTrailing, child: [
+            {
+              el: 'div', class: cn.MDCPaginationRPP, child: [
+                { el: 'div', class: cn.MDCPaginationRPPLabel, child: 'Rows per page' },
+                {
+                  el: 'div', class: cng.selectRPPGroup, child: [
+                    {
+                      el: 'div', class: cn.MDCSelectAnchor, style: style.selectAnchor, events: { click: this.rowsDropdown }, child: [
+                        {
+                          el: 'span', class: cn.MDCSelectedTextContainer, child: [
+                            { el: 'span', class: cn.MDCSelectedText, child: this.rowBound }
+                          ]
+                        },
+                        { el: 'span', class: cn.MDCSelectDropdownIcon, child: [] },
+                        {
+                          el: 'span', class: cng.spanNotchedGroup, child: [
+                            { el: 'span', class: cn.MDCNotchedOutlineLeading, child: [] },
+                            { el: 'span', class: cn.MDCNotchedOutlineTrailing, child: [] },
+                          ]
+                        },
+                      ]
+                    },
+                    {
+                      el: 'div', class: cng.selectRPPMenuGroup, child: [
+                        { el: 'ul', class: cng.listRPPGroup, child: rowsPerPageList }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              el: 'div', class: cn.MDCPaginationNavigation, child: [
+                { el: 'div', class: cn.MDCPaginationNavigationTotal, child: _this.start + '-' + _this.end + ' of ' + _this.totalData },
+                {
+                  el: 'button', disabled: this.pageIndex === 0, class: cng.footNavigationGroup, child: [
+                    { el: 'div', class: cn.MDCButtonIcon, child: 'first_page' }
+                  ], events: { click: e => this.navigation('firstPage', e) }
+                },
+                {
+                  el: 'button', disabled: this.pageIndex === 0, class: cng.footNavigationGroup, child: [
+                    { el: 'div', class: cn.MDCButtonIcon, child: 'chevron_left' }
+                  ], events: { click: e => this.navigation('prevPage', e) }
+                },
+                {
+                  el: 'button', disabled: (this.pageIndex + 1) === Math.ceil(this.totalData / this.rowBound), class: cng.footNavigationGroup, child: [
+                    { el: 'div', class: cn.MDCButtonIcon, child: 'chevron_right' }
+                  ], events: { click: e => this.navigation('nextPage', e) }
+                },
+                {
+                  el: 'button', disabled: (this.pageIndex + 1) === Math.ceil(this.totalData / this.rowBound), class: cng.footNavigationGroup, child: [
+                    { el: 'div', class: cn.MDCButtonIcon, child: 'last_page' }
+                  ], events: { click: e => this.navigation('lastPage', e) }
+                },
+              ]
+            }
+          ]
+        }
+      ]
+    }
 
     const node = this.buildNode(s)
 
@@ -398,9 +454,9 @@ var MaterialTable = (function () {
     }
     this._callFn('buildWithData', function () {
       this.buildRow()
-      this.buildFooter({replace: true})
+      this.buildFooter({ replace: true })
     })
-  } 
+  }
 
   MTB.prototype.buildNode = function (s) {
     const el = document.createElement(s.el)
@@ -422,7 +478,7 @@ var MaterialTable = (function () {
           break;
         case 'data':
           for (const data in s.data) {
-            el.setAttribute('data-'+data, s.data[data])
+            el.setAttribute('data-' + data, s.data[data])
           }
           break;
         case 'disabled': el[opt] = s[opt]; break;
