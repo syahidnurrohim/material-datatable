@@ -129,7 +129,12 @@ export const style = {
     marginLeft: '1.0em'
   },
   arrowHeader: {
-    marginLeft: '0.25em',
+    marginLeft: '0.25em', 
     transform: 'translateY(0.25em)'
+  },
+  title: {
+    display: 'inline',
+    marginLeft: '0.5em',
+    lineHeight: '2.5'
   }
 }
